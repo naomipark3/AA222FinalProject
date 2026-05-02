@@ -39,7 +39,7 @@ def bezier_curve(control_points, n_pts=200):
 
 
 def bezier_derivative(control_points, n_pts=200):
-    """
+    r"""
     First derivative of a Bézier curve. This computes the slope of the nozzle wall
     dr/dx along the contour. For our purposes, it's used to get the exit wall angle
     (this determines the divergence loss factor \lambda in the thrust calculation) 
@@ -405,7 +405,7 @@ if __name__ == "__main__":
     )
 
     print(f"Design variables: {model.n_vars}")
-    print(f"Bounds per var: {model.bounds[0]}\n")
+    print(f"Bounds per var: {model.bounds[0]}")
 
     #Test: gentle linear expansion to 2.5× throat radius
     r_exit = model.r_throat * 2.5
