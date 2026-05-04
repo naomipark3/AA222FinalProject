@@ -153,9 +153,7 @@ def thrust_coefficient(M_e, gamma, epsilon, p_a_pc, lam=1.0):
 
     return lam * momentum + press
 
-
 #Nozzle Model (main class/simulator)
-
 class NozzleModel:
     """
     Quasi-1D isentropic nozzle model with a Bézier-parameterized diverging contour.
@@ -362,6 +360,94 @@ class NozzleModel:
         plt.savefig(filename, dpi=150, bbox_inches="tight")
         plt.close(fig)
 
+    def plot_3d(self, design_vars, filename="nozzle_3d.png", title=None,
+                color_by="mach", cutaway=True):
+        """
+        3D visualization of the nozzle as a surface of revolution, colored
+        by a flow property (Mach number by default). The high-level idea is
+        that since the nozzle is axisymmetric, the 3D surface is just the
+        2D contour r(x) swept around the x-axis (each axial station becomes
+        a circle of radius r(x)). This uses the same physics data as plot(),
+        just rearranged into a 3D mesh.
+        cutaway=True does a half-revolution (theta in [0, pi]) instead of
+        full, which lets the inner contour profile show alongside the 3D
+        surface. This is usually more informative than a closed cylinder for 
+        nozzle figures since the *interior* is what the optimizer is actually
+        reshaping.
+        @param: design_vars (array-like): control point radii (same as evaluate)
+        @param: filename (str): output PNG path
+        @param: title (str): optional override; auto-generated if None
+        @param: color_by (str): "mach" or "pressure" - which flow field to map to color
+        @param: cutaway (bool): half-revolution if True, full if False
+        """
+        res = self.evaluate(design_vars)
+        if not res["valid"]:
+            print("Invalid design – cannot plot.")
+            return
+ 
+        x = res["contour"][:, 0]
+        r = res["contour"][:, 1]
+ 
+        #pick which flow property gets mapped to color
+        if color_by == "mach":
+            prop = res["mach"]
+            cbar_label = "Mach number"
+        elif color_by == "pressure":
+            prop = res["pressure"]
+            cbar_label = "$p / p_c$"
+        else:
+            raise ValueError("color_by must be 'mach' or 'pressure'")
+ 
+        #surface of revolution: sweep contour around the x-axis
+        n_theta = 80
+        theta_max = np.pi if cutaway else 2 * np.pi
+        theta = np.linspace(0, theta_max, n_theta)
+ 
+        #mesh of (X, Y, Z) at every (axial, azimuthal) point
+        X = np.tile(x[:, None], (1, n_theta))
+        Y = np.outer(r, np.cos(theta))
+        Z = np.outer(r, np.sin(theta))
+ 
+        #flow prop is axisymmetric (varies only with x), so tile across theta
+        cmap = plt.cm.viridis
+        norm = plt.Normalize(prop.min(), prop.max())
+        facecolors = cmap(norm(np.tile(prop[:, None], (1, n_theta))))
+ 
+        #plot
+        fig = plt.figure(figsize=(11, 6))
+        ax = fig.add_subplot(111, projection="3d")
+        ax.plot_surface(
+            X, Y, Z,
+            facecolors=facecolors,
+            rstride=1, cstride=1,
+            linewidth=0, antialiased=True, shade=False,
+        )
+ 
+        #colorbar (need a separate ScalarMappable since facecolors bypasses cmap)
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+        sm.set_array([])
+        cbar = fig.colorbar(sm, ax=ax, shrink=0.6, pad=0.1)
+        cbar.set_label(cbar_label)
+ 
+        #axes labels and viewing angle
+        ax.set_xlabel("Axial position  [m]")
+        ax.set_ylabel("Y  [m]")
+        ax.set_zlabel("Z  [m]")
+        ax.view_init(elev=20, azim=-60)
+ 
+        #aspect: nozzle is much longer than it is wide
+        rmax = r.max()
+        ax.set_box_aspect([self.L_nozzle, 2 * rmax, 2 * rmax])
+ 
+        if title is None:
+            tag = "Mach" if color_by == "mach" else "$p/p_c$"
+            title = f"3D Nozzle \n $C_F$ = {res['C_F']:.5f} \n colored by {tag}"
+        ax.set_title(title)
+ 
+        plt.tight_layout()
+        plt.savefig(filename, dpi=150, bbox_inches="tight")
+        plt.close(fig)
+
     def print_summary(self, design_vars):
         """
         Prints a summary of the nozzle performance.
@@ -390,9 +476,7 @@ class NozzleModel:
         """
         return {"C_F": -999.0, "valid": False}
 
-
 #Quick validation test
-
 if __name__ == "__main__":
     '''NOTE: this is just a test to see if the simulator works. This is NOT our baseline or anything
     we will actually use for the results (see baseline_nozzle.py for that)'''
@@ -414,5 +498,5 @@ if __name__ == "__main__":
     print(f"Test radii: {np.round(dv, 4)}")
 
     model.print_summary(dv)
-    model.plot(dv, filename="nozzle_test.png", title="Test – Linear Expansion")
+    model.plot(dv, filename="nozzle_test.png", title="Test (Linear Expansion)")
     print("Plot saved as nozzle_test.png")

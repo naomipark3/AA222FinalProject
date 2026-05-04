@@ -147,3 +147,4 @@ if __name__ == "__main__":
     baseline.print_summary()
     baseline.plot(filename="baseline_test.png")
     print("Plot saved as baseline_test.png")
+    model.plot_3d(baseline.design_vars, filename="baseline_3d.png") #plot 3D model
