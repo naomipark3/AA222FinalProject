@@ -187,8 +187,8 @@ class NozzleModel:
         - divergence loss correction based on exit angle
 
     Notes:
-    - This is a black-box function from design vars → C_F
-    - Intended for use in derivative-free optimization (e.g. Bayesian optimization)
+    This is a black-box function from design vars --> C_F, and it's intended
+    for use in derivative-free optimization (e.g. Bayesian optimization)
     """
 
     def __init__(
@@ -377,7 +377,7 @@ class NozzleModel:
         print(f"Exit area ratio ε = {res['epsilon']:.4f}")
         print(f"Exit pressure ratio p_e/p_c= {res['p_e_over_p_c']:.6f}")
         print(f"Exit wall angle = {res['theta_exit']:.2f}°")
-        print(f"Divergence factor λ = {res['lambda_div']:.6f}")
+        print(f"Divergence factor \lambda = {res['lambda_div']:.6f}")
 
     #internal (cannot be used outside of this class)
 
@@ -394,7 +394,8 @@ class NozzleModel:
 #Quick validation test
 
 if __name__ == "__main__":
-
+    '''NOTE: this is just a test to see if the simulator works. This is NOT our baseline or anything
+    we will actually use for the results (see baseline_nozzle.py for that)'''
     model = NozzleModel(
         #we can tweak these params if wanted!!
         r_throat=0.05,          #5 cm throat radius
