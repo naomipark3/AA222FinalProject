@@ -134,7 +134,7 @@ class BaselineNozzle:
 
 if __name__ == "__main__":
 
-    #Same model config the optimizer will use — keep these in sync
+    #Same model config the optimizer will use, keep these in sync
     model = NozzleModel(
         r_throat=0.05,          #5 cm throat radius
         L_nozzle=0.20,          #20 cm diverging section
